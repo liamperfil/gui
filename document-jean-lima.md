@@ -16,3 +16,9 @@
 - Parâmetro strict=False em ipaddress.ip_network
 - Comentários Explicativos
 - Saída de Depuração
+
+## gui/contrib/signet/getcoins.py
+- Error Handling and Messaging
+- Readability and Maintainability
+- Robustness and Input Validation
+- Minor Improvements
