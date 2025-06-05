@@ -257,10 +257,30 @@ def main():
 
 if __name__ == "__main__":
     try:
-        main()
-    except SystemExit as e:
-        print(e)
-        sys.exit(1)
-    except Exception as e:
-        print(f"An unhandled critical error occurred: {e}", file=sys.stderr)
-        sys.exit(1)
+        rv = subprocess.run([args.imagemagick, 'svg:-', '-depth', '8', 'ppm:-'], input=res.content, check=True, capture_output=True)
+    except FileNotFoundError:
+        raise SystemExit(f"The binary {args.imagemagick} could not be found. Please make sure ImageMagick (or a compatible fork) is installed and that the correct path is specified.")
+
+    img = PPMImage(io.BytesIO(rv.stdout))
+
+    # Terminal interaction
+    print_image(img)
+    print(f"Captcha from URL {args.captcha}")
+    data['captcha'] = input('Enter captcha: ')
+
+try:
+    res = session.post(args.faucet, data=data)
+except Exception:
+    raise SystemExit(f"Unexpected error when contacting faucet: {sys.exc_info()[0]}")
+
+# Display the output as per the returned status code
+if res:
+    # When the return code is in between 200 and 400 i.e. successful
+    print(res.text)
+elif res.status_code == 404:
+    print('The specified faucet URL does not exist. Please check for any server issues/typo.')
+elif res.status_code == 429:
+    print('The script does not allow for repeated transactions as the global faucet is rate-limited to 1 request/IP/day. You can access the faucet website to get more coins manually')
+else:
+    print(f'Returned Error Code {res.status_code}\n{res.text}\n')
+    print('Please check the provided arguments for their validity and/or any possible typo.')
